@@ -38,7 +38,7 @@ jobs:
           git pull origin master
           git fetch origin deployed
           git checkout deployed
-          git merge master --no-edit --no-ff || git merge master --no-edit --no-ff --allow-unrelated-histories || git diff
+          git merge origin/master --no-edit --no-ff || git merge master --no-edit --no-ff --allow-unrelated-histories || git diff
 
 
       - name: Build project
