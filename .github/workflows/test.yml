@@ -7,7 +7,7 @@ on:
 jobs:
   build-and-deploy:
     runs-on: ubuntu-latest
-    if: github.event.review.state == 'approved'
+    # if: github.event.review.state == 'approved'
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
