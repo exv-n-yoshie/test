@@ -37,8 +37,8 @@ jobs:
           git config --global user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git fetch origin deployed
           git checkout deployed
-          git merge master --no-edit --no-ff || git merge master --no-edit --no-ff --allow-unrelated-histories 
-          git diff
+          git merge master --no-edit --no-ff || git merge master --no-edit --no-ff --allow-unrelated-histories || git diff
+
 
       - name: Build project
         run: npm run build
