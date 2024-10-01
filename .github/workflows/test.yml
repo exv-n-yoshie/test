@@ -1,13 +1,13 @@
 name: Deploy on PR Approval
 
 on:
-  pull_request_review:
-    types: [submitted]
+  push:
+    branches:
+      - main
 
 jobs:
   build-and-deploy:
     runs-on: ubuntu-latest
-    if: github.event.review.state == 'approved'
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
