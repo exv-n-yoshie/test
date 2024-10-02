@@ -30,7 +30,6 @@ jobs:
       - name: プロジェクトをビルド
         working-directory: mfc-user
         run: |
-          rm -rf dist/*
 
           base_ref="${{ github.ref }}"
 
@@ -46,9 +45,6 @@ jobs:
               exit 1
           fi
           echo "environment: $environment"
-
-          npm install --no-bin-links
-          npx gulp $environment
 
       - name: dist以外のファイルが存在しないかチェック
         run: |
