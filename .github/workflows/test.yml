@@ -21,13 +21,6 @@ jobs:
         with:
           ref: master
           fetch-depth: 0
-      - name: Cache dependencies
-        uses: actions/cache@v4
-        with:
-          path: . # stagingのディプロイはリポジトリ全体をキャッシュする
-          key: ${{ runner.os }}-build-staging-deployed # キャッシュキー
-          restore-keys: |
-            ${{ runner.os }}-build-
 
       - name: Setup Node.js
         uses: actions/setup-node@v4
