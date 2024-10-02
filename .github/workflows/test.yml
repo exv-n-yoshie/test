@@ -21,7 +21,7 @@ jobs:
         with:
           ref: master
           fetch-depth: 0
-      
+
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
@@ -40,8 +40,8 @@ jobs:
           git config --global user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git fetch origin deployed
           git checkout deployed
+          COMMIT_MESSAGES=$(git log origin/deployed --pretty=format:"%h %s")
           git merge origin/master --no-edit --no-ff
-
 
       - name: Build project
         run: npm run build
@@ -51,5 +51,5 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           git add .
-          git commit -m "Deployed on $(date)"
+          git commit -m "${{ github.head_ref }} $COMMIT_MESSAGES ディプロイ"
           git push origin deployed
