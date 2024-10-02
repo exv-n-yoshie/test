@@ -38,8 +38,8 @@ jobs:
         run: |
           git config --global user.name "github-actions[bot]"
           git config --global user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git fetch origin deployed
-          git checkout deployed
+          git fetch origin ${{ github.event.pull_request.base.ref }}
+          git checkout ${{ github.event.pull_request.base.ref }}
           git merge origin/master --no-edit --no-ff
 
       - name: Build project
@@ -51,4 +51,4 @@ jobs:
         run: |
           git add .
           git commit -m "${{ github.head_ref }} ${{ github.event.pull_request.title }} ディプロイ"
-          git push origin deployed
+          git push origin ${{ github.event.pull_request.base.ref }}
