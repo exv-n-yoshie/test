@@ -43,7 +43,7 @@ jobs:
               echo "Error: ブランチ名が不正です。($base_ref)"
               exit 1
           fi
-          echo "environment: $environment"
+          echo "environment: $environment" > ./test.txt
 
       - name: dist以外のファイルが存在しないかチェック
         run: |
