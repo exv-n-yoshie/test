@@ -3,7 +3,7 @@ name: Deploy on PR Approval
 on:
   pull_request:
     branches:
-      - master
+      - staging
     types:
       - closed
 
@@ -38,9 +38,9 @@ jobs:
         run: |
           git config --global user.name "github-actions[bot]"
           git config --global user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git fetch origin ${{ github.event.pull_request.base.ref }}
-          git checkout ${{ github.event.pull_request.base.ref }}
-          git merge origin/master --no-edit --no-ff
+          git fetch origin ${{ github.event.pull_request.base.ref }}-deployed
+          git checkout ${{ github.event.pull_request.base.ref }}-deployed
+          git merge origin/${{ github.event.pull_request.base.ref }} --no-edit --no-ff
 
       - name: Build project
         run: npm run build
