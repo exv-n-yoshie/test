@@ -33,11 +33,11 @@ jobs:
           base_ref="${{ github.ref }}"
 
           # ブランチ名をチェックし、環境変数を設定
-          if [ "$base_ref" == "develop" ]; then
+          if [ "$base_ref" == "refs/heads/develop" ]; then
               environment="dev"
-          elif [ "$base_ref" == "staging" ]; then
+          elif [ "$base_ref" == "refs/heads/staging" ]; then
               environment="stg"
-          elif [ "$base_ref" == "master" ]; then
+          elif [ "$base_ref" == "refs/heads/master" ]; then
               environment="master"
           else
               echo "Error: ブランチ名が不正です。($base_ref)"
