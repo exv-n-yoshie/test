@@ -12,12 +12,12 @@ jobs:
       GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
     permissions:
       contents: write
-      pull-requests: write
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
         with:
           ref: master
+          fetch-depth: 0
       
       - name: Setup Node.js
         uses: actions/setup-node@v4
@@ -35,10 +35,9 @@ jobs:
         run: |
           git config --global user.name "github-actions[bot]"
           git config --global user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git pull origin master
           git fetch origin deployed
           git checkout deployed
-          git merge origin/master --no-edit --no-ff || git merge master --no-edit --no-ff --allow-unrelated-histories || git diff
+          git merge origin/master --no-edit --no-ff
 
 
       - name: Build project
