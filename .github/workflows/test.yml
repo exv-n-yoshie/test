@@ -28,7 +28,6 @@ jobs:
             cache: 'npm'
 
       - name: プロジェクトをビルド
-        working-directory: mfc-user
         run: |
 
           base_ref="${{ github.ref }}"
