@@ -2,8 +2,6 @@ name: Deploy on PR Approval
 
 on:
   pull_request:
-    branches:
-      - master
     types:
       - closed
 
@@ -19,7 +17,7 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
         with:
-          ref: master
+          ref: ${{ github.event.pull_request.base.ref }}-deployed
           fetch-depth: 0
 
       - name: Setup Node.js
@@ -39,8 +37,7 @@ jobs:
           git config --global user.name "github-actions[bot]"
           git config --global user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git fetch origin ${{ github.event.pull_request.base.ref }}
-          git checkout ${{ github.event.pull_request.base.ref }}
-          git merge origin/master --no-edit --no-ff
+          git merge origin/${{ github.event.pull_request.base.ref }} --no-edit --no-ff
 
       - name: Build project
         run: npm run build
@@ -51,4 +48,4 @@ jobs:
         run: |
           git add .
           git commit -m "${{ github.head_ref }} ${{ github.event.pull_request.title }} ディプロイ"
-          git push origin ${{ github.event.pull_request.base.ref }}
+          git push origin HEAD
