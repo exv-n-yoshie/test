@@ -1,51 +1,63 @@
-name: Deploy on PR Approval
+name: プルリクエストを承認時ディプロイする
 
 on:
-  pull_request:
-    types:
-      - closed
-
+  push:
+    branches:
+      - '*'
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+defaults:
+  run:
+    shell: bash
 jobs:
   build-and-deploy:
     runs-on: ubuntu-latest
-    if: github.event.pull_request.merged == true
+    timeout-minutes: 5
     env:
       GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
     permissions:
       contents: write
     steps:
-      - name: Checkout code
+      - name: コードのチェックアウト
         uses: actions/checkout@v4
-        with:
-          ref: ${{ github.event.pull_request.base.ref }}-deployed
-          fetch-depth: 0
-
-      - name: Setup Node.js
+      - name: Node.js のセットアップ
         uses: actions/setup-node@v4
         with:
             node-version: 14.21.3
             cache: 'npm'
-            cache-dependency-path: package-lock.json
 
-      - name: Install dependencies
-        run: npm install
-
-      - name: Deploy to deployed branch
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      - name: プロジェクトをビルド
+        working-directory: mfc-user
         run: |
-          git config --global user.name "github-actions[bot]"
-          git config --global user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git fetch origin ${{ github.event.pull_request.base.ref }}
-          git merge origin/${{ github.event.pull_request.base.ref }} --no-edit --no-ff
+          rm -rf dist/*
 
-      - name: Build project
-        run: npm run build
+          base_ref="${{ github.ref }}"
 
-      - name: Commit changes
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          # ブランチ名をチェックし、環境変数を設定
+          if [ "$base_ref" == "develop" ]; then
+              environment="dev"
+          elif [ "$base_ref" == "staging" ]; then
+              environment="stg"
+          elif [ "$base_ref" == "master" ]; then
+              environment="master"
+          else
+              echo "Error: ブランチ名が不正です。($base_ref)"
+              exit 1
+          fi
+          echo "environment: $environment"
+
+          npm install --no-bin-links
+          npx gulp $environment
+
+      - name: dist以外のファイルが存在しないかチェック
         run: |
-          git add .
-          git commit -m "${{ github.head_ref }} ${{ github.event.pull_request.title }} ディプロイ"
-          git push origin HEAD
+          set -e
+          git status --porcelain | while read -r line
+          do
+              if ! echo "$line" | grep -q "dist/"
+              then
+                  echo "Error: dist以外のディレクトリが存在します。($line)"
+                  exit 1
+              fi
+          done
