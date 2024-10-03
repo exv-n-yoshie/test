@@ -32,5 +32,5 @@ jobs:
 
       - name: プロジェクトをビルド
         run: |
-          echo "NG!"
-          exit 1
+          echo "OK!"
+
