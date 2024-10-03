@@ -1,0 +1,2 @@
+<?php
+E_ERROR
