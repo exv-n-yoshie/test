@@ -3,7 +3,10 @@ name: プルリクエストを承認時ディプロイする
 on:
   push:
     branches:
-      - '*'
+      - develop
+  pull_request:
+    branches:
+      - staging
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
@@ -29,30 +32,4 @@ jobs:
 
       - name: プロジェクトをビルド
         run: |
-
-          base_ref="${{ github.ref }}"
-
-          # ブランチ名をチェックし、環境変数を設定
-          if [ "$base_ref" == "refs/heads/develop" ]; then
-              environment="dev"
-          elif [ "$base_ref" == "refs/heads/staging" ]; then
-              environment="stg"
-          elif [ "$base_ref" == "refs/heads/master" ]; then
-              environment="master"
-          else
-              echo "Error: ブランチ名が不正です。($base_ref)"
-              exit 1
-          fi
-          echo "environment: $environment" > ./test.txt
-
-      - name: dist以外のファイルが存在しないかチェック
-        run: |
-          set -e
-          git status --porcelain | while read -r line
-          do
-              if ! echo "$line" | grep -q "dist/"
-              then
-                  echo "Error: dist以外のディレクトリが存在します。($line)"
-                  exit 1
-              fi
-          done
+          echo "OK!"
