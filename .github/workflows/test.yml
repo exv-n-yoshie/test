@@ -1,51 +1,35 @@
-name: Deploy on PR Approval
+name: プルリクエストを承認時ディプロイする
 
 on:
+  push:
+    branches:
+      - develop
   pull_request:
-    types:
-      - closed
-
+    branches:
+      - staging
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+defaults:
+  run:
+    shell: bash
 jobs:
   build-and-deploy:
     runs-on: ubuntu-latest
-    if: github.event.pull_request.merged == true
+    timeout-minutes: 5
     env:
       GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
     permissions:
       contents: write
     steps:
-      - name: Checkout code
+      - name: コードのチェックアウト
         uses: actions/checkout@v4
-        with:
-          ref: ${{ github.event.pull_request.base.ref }}-deployed
-          fetch-depth: 0
-
-      - name: Setup Node.js
+      - name: Node.js のセットアップ
         uses: actions/setup-node@v4
         with:
             node-version: 14.21.3
             cache: 'npm'
-            cache-dependency-path: package-lock.json
 
-      - name: Install dependencies
-        run: npm install
-
-      - name: Deploy to deployed branch
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      - name: プロジェクトをビルド
         run: |
-          git config --global user.name "github-actions[bot]"
-          git config --global user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git fetch origin ${{ github.event.pull_request.base.ref }}
-          git merge origin/${{ github.event.pull_request.base.ref }} --no-edit --no-ff
-
-      - name: Build project
-        run: npm run build
-
-      - name: Commit changes
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: |
-          git add .
-          git commit -m "${{ github.head_ref }} ${{ github.event.pull_request.title }} ディプロイ"
-          git push origin HEAD
+          echo "OK!"
