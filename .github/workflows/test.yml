@@ -4,9 +4,9 @@ on:
   push:
     branches:
       - develop
-  pull_request:
-    branches:
-      - staging
+  # pull_request:
+  #   branches:
+  #     - staging
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
@@ -22,13 +22,13 @@ jobs:
     permissions:
       contents: write
     steps:
-      - name: コードのチェックアウト
-        uses: actions/checkout@v4
-      - name: Node.js のセットアップ
-        uses: actions/setup-node@v4
-        with:
-            node-version: 14.21.3
-            cache: 'npm'
+      # - name: コードのチェックアウト
+      #   uses: actions/checkout@v4
+      # - name: Node.js のセットアップ
+      #   uses: actions/setup-node@v4
+      #   with:
+      #       node-version: 14.21.3
+      #       cache: 'npm'
 
       - name: プロジェクトをビルド
         run: |

@@ -1,11 +1,13 @@
 BRANCH_NAME=master
 REMOTE_NAME=origin
+# リモートの更新を取得
+git fetch "$REMOTE_NAME"
+
 LOCAL_COMMIT=$(git rev-parse "$BRANCH_NAME")
 REMOTE_COMMIT=$(git rev-parse "$REMOTE_NAME/$BRANCH_NAME")
 
 if [ "$LOCAL_COMMIT" != "$REMOTE_COMMIT" ]; then
   echo "ソース更新"
-  git pull
 
   echo "マイグレーションファイルの確認"
   # 追加されたマイグレーションファイルを検出
