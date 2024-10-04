@@ -29,7 +29,20 @@ jobs:
       #   with:
       #       node-version: 14.21.3
       #       cache: 'npm'
-
+      - name: ブランチのマージ
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          git config --global user.name "github-actions[bot]"
+          git config --global user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git clone https://github.com/exv-n-yoshie/test.git
+          cd git-fc-sanfrecce
+          git fetch origin develop
+          git chekout develop
+          git fetch origin develop-deployed
+          git checkout develop-deployed
+          git merge origin/develop --no-edit --no-ff
+          
       - name: プロジェクトをビルド
         run: |
           echo "OK!"
