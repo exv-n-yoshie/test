@@ -1,12 +1,9 @@
 name: プルリクエストを承認時ディプロイする
 
 on:
-  push:
-    branches:
-      - develop
   pull_request:
-    branches:
-      - staging
+    types:
+      - closed
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
@@ -18,6 +15,7 @@ jobs:
   build-and-deploy:
     runs-on: ubuntu-latest
     timeout-minutes: 5
+    if: github.event.pull_request.merged == true
     env:
       GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
     permissions:
@@ -30,10 +28,10 @@ jobs:
       #   with:
       #       node-version: 14.21.3
       #       cache: 'npm'
-      - name: Set up Git
-        run: |
-          git config --global user.name "github-actions[bot]"
-          git config --global user.email "41898282+github-actions[bot]@users.noreply.github.com"
+      # - name: Set up Git
+      #   run: |
+      #     git config --global user.name "github-actions[bot]"
+      #     git config --global user.email "41898282+github-actions[bot]@users.noreply.github.com"
 
       - name: デバッグ
         run: |
@@ -44,6 +42,9 @@ jobs:
           echo "github.ref_name: ${{ github.ref_name }}"
           echo "github.ref: ${{ github.ref }}"
           echo "BRANCH_NAME: ${BRANCH_NAME}"
+          echo "github.event.pull_request.base.ref: ${{ github.event.pull_request.base.ref }}"
+          echo "github.head_ref: ${{ github.head_ref }}"
+          echo "github.event.pull_request.title: ${{ github.event.pull_request.title }}"
 
       # - name: Extract branch name
       #   shell: bash
