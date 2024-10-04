@@ -36,7 +36,7 @@ jobs:
       - name: デバッグ
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          GITHUB_HEAD_REF: ${{ github.ref_name }} 
+          MERGE_BRANCH: ${{ github.ref_name }} 
           GITHUB_PULL_REQUEST_TITLE: ${{ github.event.pull_request.title }}
         run: |
           echo "GITHUB_REPOSITORY: $GITHUB_REPOSITORY"
@@ -49,7 +49,7 @@ jobs:
           echo "github.event.pull_request.base.ref: ${{ github.event.pull_request.base.ref }}"
           echo "github.head_ref: ${{ github.head_ref }}"
           echo "github.event.pull_request.title: ${{ github.event.pull_request.title }}"
-          echo "GITHUB_HEAD_REF: ${GITHUB_HEAD_REF}"
+          echo "MERGE_BRANCH: ${MERGE_BRANCH}"
 
       # - name: Extract branch name
       #   shell: bash
