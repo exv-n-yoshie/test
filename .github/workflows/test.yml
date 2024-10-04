@@ -34,6 +34,10 @@ jobs:
       #     git config --global user.email "41898282+github-actions[bot]@users.noreply.github.com"
 
       - name: デバッグ
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GITHUB_HEAD_REF: ${{ github.ref_name }} 
+          GITHUB_PULL_REQUEST_TITLE: ${{ github.event.pull_request.title }}
         run: |
           echo "GITHUB_REPOSITORY: $GITHUB_REPOSITORY"
           echo "GITHUB_REF: $GITHUB_REF"
@@ -45,6 +49,7 @@ jobs:
           echo "github.event.pull_request.base.ref: ${{ github.event.pull_request.base.ref }}"
           echo "github.head_ref: ${{ github.head_ref }}"
           echo "github.event.pull_request.title: ${{ github.event.pull_request.title }}"
+          echo "GITHUB_HEAD_REF: ${GITHUB_HEAD_REF}"
 
       # - name: Extract branch name
       #   shell: bash
