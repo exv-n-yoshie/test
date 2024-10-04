@@ -1,37 +1,84 @@
 name: プルリクエストを承認時ディプロイする
 
 on:
-  push:
-    branches:
-      - develop
   pull_request:
-    branches:
-      - staging
+    types:
+      - closed
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
 defaults:
   run:
     shell: bash
+    
 jobs:
   build-and-deploy:
     runs-on: ubuntu-latest
     timeout-minutes: 5
+    if: github.event.pull_request.merged == true
     env:
       GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
     permissions:
       contents: write
     steps:
-      - name: コードのチェックアウト
-        uses: actions/checkout@v4
-      - name: dist以外のファイルが存在しないかチェック
-        run: |
-          git status --porcelain | while read -r line
-          do
-              if ! echo "$line" | grep -q "dist/"
-              then
-                  echo "Error: dist以外のディレクトリが存在します。($line)"
-                  exit 1
-              fi
-          done
+      # - name: コードのチェックアウト
+      #   uses: actions/checkout@v4
+      # - name: Node.js のセットアップ
+      #   uses: actions/setup-node@v4
+      #   with:
+      #       node-version: 14.21.3
+      #       cache: 'npm'
+      # - name: Set up Git
+      #   run: |
+      #     git config --global user.name "github-actions[bot]"
+      #     git config --global user.email "41898282+github-actions[bot]@users.noreply.github.com"
 
+      - name: デバッグ
+        run: |
+          echo "GITHUB_REPOSITORY: $GITHUB_REPOSITORY"
+          echo "GITHUB_REF: $GITHUB_REF"
+          echo "GITHUB_ACTOR: $GITHUB_ACTOR"
+          echo "GITHUB_REPOSITORY#*/: ${GITHUB_REPOSITORY#*/}"
+          echo "github.ref_name: ${{ github.ref_name }}"
+          echo "github.ref: ${{ github.ref }}"
+          echo "BRANCH_NAME: ${BRANCH_NAME}"
+          echo "github.event.pull_request.base.ref: ${{ github.event.pull_request.base.ref }}"
+          echo "github.head_ref: ${{ github.head_ref }}"
+          echo "github.event.pull_request.title: ${{ github.event.pull_request.title }}"
+
+      # - name: Extract branch name
+      #   shell: bash
+      #   run: echo "BRANCH_NAME=${GITHUB_REF#refs/heads/}" >> $GITHUB_ENV
+
+      # - name: Cache dependencies
+      #   uses: actions/cache@v4
+      #   with:
+      #       path: .
+      #       key: ${{ runner.OS }}-deployment-${{ github.ref_name }}
+      #       restore-keys: |
+      #         ${{ runner.OS }}-deployment-${{ github.ref_name }}
+
+      # - name: Clone repository
+      #   run: |
+      #     if [ ! -d "${GITHUB_REPOSITORY#*/}" ]; then
+      #       echo "Cloning repository..."
+      #       git clone https://${GITHUB_ACTOR}:${GITHUB_TOKEN}@github.com/${GITHUB_REPOSITORY}.git
+      #     fi
+      #     echo "${GITHUB_REPOSITORY#*/}"
+      #   env:
+      #     GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      # - name: ブランチのマージ
+      #   env:
+      #     GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      #   run: |
+      #     cd ${GITHUB_REPOSITORY#*/}
+      #     git fetch origin develop
+      #     git fetch origin develop-deployed
+      #     git checkout develop-deployed
+      #     git merge origin/develop --no-edit --no-ff
+      #     git push https://${GITHUB_ACTOR}:${GITHUB_TOKEN}@github.com/${GITHUB_REPOSITORY}.git HEAD:${GITHUB_REF}-deployed
+          
+      # - name: プロジェクトをビルド
+      #   run: |
+      #     echo "OK!"
