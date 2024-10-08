@@ -104,6 +104,9 @@ jobs:
           cd "${GITHUB_REPOSITORY#*/}"
           echo 1 >> test.txt
 
+      - name: イベント情報を表示
+        run: echo '${{toJSON(github.event)}}'
+
       - name: デプロイ用ブランチにコミット
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
