@@ -104,28 +104,25 @@ jobs:
           cd "${GITHUB_REPOSITORY#*/}"
           echo 1 >> test.txt
 
-      - name: Save GitHub event to file
-        run: echo '${{ toJson(github.event) }}' > github_event.json
-
-      - name: コミットメッセージ
-        run: |
-          event_json="${env.GITHUB_EVENT_JSON}"
-          commits_length=$(jq '.commits | length' github_event.json)
-          second_to_last_index=$((commits_length - 2))
-          if [ $second_to_last_index -ge 0 ]; then
-            echo "マージ前のコミットメッセージ: $second_to_last_message"
-            echo "COMMIT_MESSAGE_INDEX=$second_to_last_index" >> $GITHUB_ENV
-          else
-            echo "マージのコミットメッセージしかなかったのでそれをコミットメッセージとする"
-            echo "COMMIT_MESSAGE_INDEX=0" >> $GITHUB_ENV
-          fi
-          echo $COMMIT_MESSAGE_INDEX
+      - name: Get second to last commit
+        id: get_commit
+        uses: actions/github-script@v6
+        with:
+          script: |
+            const commits = context.payload.commits;
+            if (commits.length > 1) {
+              const secondToLastCommit = commits[commits.length - 2];
+              console.log(`Second to last commit message: ${secondToLastCommit.message}`);
+              core.setOutput('second_to_last_message', secondToLastCommit.message);
+            } else {
+              console.log('Not enough commits to get the second to last one');
+              core.setOutput('second_to_last_message', '');
+            }
 
       - name: コミットメッセージ取得
         run: |
-          index=$COMMIT_MESSAGE_INDEX
-          commit_message=$(echo '${{ toJson(github.event.commits) }}' | jq -r ".[$index].message")
-          echo "Commit message: $commit_message"
+          commit_message="${{ steps.get_commit.outputs.second_to_last_message }}"
+
           # メッセージをサニタイズ
           sanitized_message=$(echo "$commit_message" | sed 's/[&;<>$()'"'"'|*?#]//g' | tr -d '"')
 
