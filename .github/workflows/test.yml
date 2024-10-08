@@ -107,6 +107,11 @@ jobs:
       - name: イベント情報を表示
         run: echo '${{toJSON(github.event)}}'
 
+      - name: コミットメッセージを取得
+        run: |
+          commits_length=$(jq length <<< "${{ github.event.commits }}")
+          echo "commits_length: $commits_length"
+
       - name: デプロイ用ブランチにコミット
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
