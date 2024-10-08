@@ -101,6 +101,7 @@ jobs:
 
           # echo "ビルド"
           # npx gulp $environment
+          cd "${GITHUB_REPOSITORY#*/}"
           echo 1 >> test.txt
 
       - name: デプロイ用ブランチにコミット
