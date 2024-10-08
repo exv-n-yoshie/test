@@ -1,2 +1,2 @@
 <?php
-E_ERRORaaa;aaa
+E_ERRORaaa;aaaaa
