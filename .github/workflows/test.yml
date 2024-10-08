@@ -4,45 +4,111 @@ on:
   push:
     branches:
       - develop
-  # pull_request:
-  #   branches:
-  #     - staging
+      - staging
+
 concurrency:
-  group: ${{ github.workflow }}-${{ github.ref }}
-  cancel-in-progress: true
+  group: ${{ github.workflow }}-${{ github.ref }} # ワークフローの実行をグループ化する
+  cancel-in-progress: true # 同一グループで重複してジョブが走った場合既存のジョブをキャンセルする
+
 defaults:
   run:
-    shell: bash
+    shell: bash # シェルを bash に設定することで、パイプラインのエラーが発生した場合にスクリプトが停止するようになる
+
 jobs:
   build-and-deploy:
     runs-on: ubuntu-latest
-    timeout-minutes: 5
+    timeout-minutes: 5 # タイムアウト時間を設定
     env:
       GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
     permissions:
       contents: write
     steps:
-      # - name: コードのチェックアウト
-      #   uses: actions/checkout@v4
-      # - name: Node.js のセットアップ
-      #   uses: actions/setup-node@v4
-      #   with:
-      #       node-version: 14.21.3
-      #       cache: 'npm'
-      - name: ブランチのマージ
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      - name: Gitのセットアップ
         run: |
           git config --global user.name "github-actions[bot]"
           git config --global user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git clone https://github.com/exv-n-yoshie/test.git
-          cd git-fc-sanfrecce
-          git fetch origin develop
-          git chekout develop
-          git fetch origin develop-deployed
-          git checkout develop-deployed
-          git merge origin/develop --no-edit --no-ff
-          
-      - name: プロジェクトをビルド
+
+      - name: キャッシュを有効にする
+        uses: actions/cache@v4
+        with:
+          path: .
+          key: ${{ runner.OS }}-deployment-${{ github.ref }}
+          restore-keys: |
+            ${{ runner.OS }}-deployment-${{ github.ref }}
+
+      - name: リポジトリをクローン
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          echo "OK!"
+          if [ ! -d "${GITHUB_REPOSITORY#*/}" ]; then
+            echo "リポジトリをクローンします。"
+            git clone https://${GITHUB_ACTOR}:${GITHUB_TOKEN}@github.com/${GITHUB_REPOSITORY}.git
+          fi
+
+      - name: Node.js のセットアップ
+        uses: actions/setup-node@v4
+        with:
+          node-version: 14.21.3
+
+      - name: リポジトリがキャッシュされていた場合今回のユーザで置き換える
+        run: |
+          cd "${GITHUB_REPOSITORY#*/}"
+          git remote set-url origin https://${GITHUB_ACTOR}:${GITHUB_TOKEN}@github.com/${GITHUB_REPOSITORY}.git
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: ブランチのマージ
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GITHUB_PULL_REQUEST_BASE_REF: ${{ github.ref_name }} # 中間変数を使うとスクリプトインジェクションが防げる
+        run: |
+          cd "${GITHUB_REPOSITORY#*/}"
+          echo "マージするブランチを取得"
+          git fetch origin $GITHUB_PULL_REQUEST_BASE_REF
+          git checkout $GITHUB_PULL_REQUEST_BASE_REF
+          git pull origin $GITHUB_PULL_REQUEST_BASE_REF
+
+          echo "ベースになるブランチを取得し切り替える"
+          git fetch origin ${GITHUB_PULL_REQUEST_BASE_REF}-deployed
+          git checkout ${GITHUB_PULL_REQUEST_BASE_REF}-deployed
+          git pull origin ${GITHUB_PULL_REQUEST_BASE_REF}-deployed
+
+          echo "マージする"
+          git merge origin/$GITHUB_PULL_REQUEST_BASE_REF --no-edit --no-ff
+
+      - name: プロジェクトをビルド
+        env:
+          GITHUB_PULL_REQUEST_BASE_REF: ${{ github.ref_name }}
+        run: |
+          # cd "${GITHUB_REPOSITORY#*/}/mfc-user"
+          # rm -rf dist/*
+
+          # base_ref="$GITHUB_PULL_REQUEST_BASE_REF"
+
+          # # ブランチ名をチェックし、環境変数を設定
+          # if [ "$base_ref" == "develop" ]; then
+          #     environment="dev"
+          # elif [ "$base_ref" == "staging" ]; then
+          #     environment="stg"
+          # else
+          #     echo "Error: ブランチ名が不正です。($base_ref)"
+          #     exit 1
+          # fi
+          # echo "environment: $environment"
+
+          # echo "npmのモジュールインストール"
+          # npm install --no-bin-links
+
+          # echo "ビルド"
+          # npx gulp $environment
+
+      - name: デプロイ用ブランチにコミット
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GITHUB_PULL_REQUEST_BASE_REF: ${{ github.ref_name }}
+          GITHUB_PULL_REQUEST_TITLE: ${{ github.event.head_commit.message }}
+        run: |
+          cd "${GITHUB_REPOSITORY#*/}"
+          git add .
+          git commit -m "${GITHUB_PULL_REQUEST_BASE_REF} ${GITHUB_PULL_REQUEST_TITLE} ディプロイ"
+          git push origin HEAD
