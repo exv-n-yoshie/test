@@ -15,8 +15,25 @@ defaults:
     shell: bash # シェルを bash に設定することで、パイプラインのエラーが発生した場合にスクリプトが停止するようになる
 
 jobs:
+  check_commits:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: コミットメッセージがあるかチェックする（タグのpushなどはない場合があるため）
+        id: check_commits
+        run: |
+          if [ "${{ github.event.commits }}" == "null" ] || [ "${{ github.event.commits[0] }}" == "null" ]; then
+            echo "No commits found in the event payload."
+            echo "::set-output name=has_commits::false"
+          else
+            echo "Commits found in the event payload."
+            echo "::set-output name=has_commits::true"
+          fi
+
   build-and-deploy:
     runs-on: ubuntu-latest
+    needs: check_commits
+    if: steps.check_commits.outputs.has_commits == 'true'
     timeout-minutes: 5 # タイムアウト時間を設定
     env:
       GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
