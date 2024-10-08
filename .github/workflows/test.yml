@@ -101,6 +101,7 @@ jobs:
 
           # echo "ビルド"
           # npx gulp $environment
+          echo 1 >> test.txt
 
       - name: デプロイ用ブランチにコミット
         env:
