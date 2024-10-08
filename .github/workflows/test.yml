@@ -104,9 +104,6 @@ jobs:
           cd "${GITHUB_REPOSITORY#*/}"
           echo 1 >> test.txt
 
-      - name: イベント情報を表示
-        run: echo '${{toJSON(github.event)}}'
-
       - name: コミットメッセージを取得
         run: |
           commits_length=$(jq '.commits | length' <<< "${{ toJson(github.event) }}")
