@@ -18,7 +18,7 @@ jobs:
   check_commits:
     runs-on: ubuntu-latest
     outputs:
-      has_commits: ${{ steps.check.outputs.has_commits }}
+      has_commits: ${{ steps.check_commits.outputs.has_commits }}
     steps:
       - name: コミットメッセージがあるかチェックする（タグのpushなどはない場合があるため）
         id: check_commits
@@ -26,10 +26,10 @@ jobs:
         run: |
           if [ "${{ github.event.commits }}" == "null" ] || [ "${{ github.event.commits[0] }}" == "null" ]; then
             echo "No commits found in the event payload."
-            echo "::set-output name=has_commits::false"
+            echo "has_commits=false" >> $GITHUB_OUTPUT
           else
             echo "Commits found in the event payload."
-            echo "::set-output name=has_commits::true"
+            echo "has_commits=true" >> $GITHUB_OUTPUT
           fi
 
   build-and-deploy:
