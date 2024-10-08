@@ -118,7 +118,7 @@ jobs:
           fi
 
           # メッセージをサニタイズ
-          sanitized_message=$(echo "$second_to_last_message" | sed 's/[&;<>$()`|*?#]//g' | tr -d "'" | tr -d '"')
+          sanitized_message=$(echo "$second_to_last_message" | sed 's/[&;<>$()'"'"'|*?#]//g' | tr -d '"')
 
           # サニタイズされたメッセージを$GITHUB_ENVに設定
           echo "COMMIT_MESSAGE=$sanitized_message" >> $GITHUB_ENV
