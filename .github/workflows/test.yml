@@ -17,10 +17,12 @@ defaults:
 jobs:
   check_commits:
     runs-on: ubuntu-latest
-
+    outputs:
+      has_commits: ${{ steps.check.outputs.has_commits }}
     steps:
       - name: コミットメッセージがあるかチェックする（タグのpushなどはない場合があるため）
         id: check_commits
+
         run: |
           if [ "${{ github.event.commits }}" == "null" ] || [ "${{ github.event.commits[0] }}" == "null" ]; then
             echo "No commits found in the event payload."
@@ -33,7 +35,7 @@ jobs:
   build-and-deploy:
     runs-on: ubuntu-latest
     needs: check_commits
-    if: steps.check_commits.outputs.has_commits == 'true'
+    if: needs.check_commits.outputs.has_commits == 'true'
     timeout-minutes: 5 # タイムアウト時間を設定
     env:
       GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
