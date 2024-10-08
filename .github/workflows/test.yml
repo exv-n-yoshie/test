@@ -104,25 +104,27 @@ jobs:
           cd "${GITHUB_REPOSITORY#*/}"
           echo 1 >> test.txt
 
-      - name: Set GitHub event as environment variable
-        run: echo 'GITHUB_EVENT_JSON<<EOF' >> $GITHUB_ENV && echo '${{ toJson(github.event) }}' >> $GITHUB_ENV && echo 'EOF' >> $GITHUB_ENV
+      - name: Get second to last commit
+        id: get_commit
+        uses: actions/github-script@v6
+        with:
+          script: |
+            const commits = context.payload.commits;
+            if (commits.length > 1) {
+              const secondToLastCommit = commits[commits.length - 2];
+              console.log(`Second to last commit message: ${secondToLastCommit.message}`);
+              core.setOutput('second_to_last_message', secondToLastCommit.message);
+            } else {
+              console.log('Not enough commits to get the second to last one');
+              core.setOutput('second_to_last_message', '');
+            }
 
-      - name: コミットメッセージを取得
+      - name: コミットメッセージ取得
         run: |
-          event_json="${env.GITHUB_EVENT_JSON}"
-          commits_length=$(jq '.commits | length' <<< "event_json")
-          second_to_last_index=$((commits_length - 2))
-          if [ $second_to_last_index -ge 0 ]; then
-            second_to_last_message=$(jq -r ".commits[$second_to_last_index].message" <<< "event_json")
-            echo "マージ前のコミットメッセージ: $second_to_last_message"
-            echo "COMMIT_MESSAGE=$second_to_last_message" >> $GITHUB_ENV
-          else
-            echo "マージのコミットメッセージしかなかったのでそれをコミットメッセージとする"
-            second_to_last_message=$(jq -r ".commits[0].message" <<< "event_json")
-          fi
+          commit_message="${{ steps.get_commit.outputs.second_to_last_message }}"
 
           # メッセージをサニタイズ
-          sanitized_message=$(echo "$second_to_last_message" | sed 's/[&;<>$()'"'"'|*?#]//g' | tr -d '"')
+          sanitized_message=$(echo "$commit_message" | sed 's/[&;<>$()'"'"'|*?#]//g' | tr -d '"')
 
           # サニタイズされたメッセージを$GITHUB_ENVに設定
           echo "COMMIT_MESSAGE=$sanitized_message" >> $GITHUB_ENV
