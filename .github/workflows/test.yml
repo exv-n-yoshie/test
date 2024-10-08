@@ -104,25 +104,30 @@ jobs:
           cd "${GITHUB_REPOSITORY#*/}"
           echo 1 >> test.txt
 
-      - name: Set GitHub event as environment variable
-        run: echo 'GITHUB_EVENT_JSON<<EOF' >> $GITHUB_ENV && echo '${{ toJson(github.event) }}' >> $GITHUB_ENV && echo 'EOF' >> $GITHUB_ENV
+      - name: Save GitHub event to file
+        run: echo '${{ toJson(github.event) }}' > github_event.json
 
-      - name: コミットメッセージを取得
+      - name: コミットメッセージ
         run: |
           event_json="${env.GITHUB_EVENT_JSON}"
-          commits_length=$(jq '.commits | length' <<< "event_json")
+          commits_length=$(jq '.commits | length' github_event.json)
           second_to_last_index=$((commits_length - 2))
           if [ $second_to_last_index -ge 0 ]; then
-            second_to_last_message=$(jq -r ".commits[$second_to_last_index].message" <<< "event_json")
             echo "マージ前のコミットメッセージ: $second_to_last_message"
-            echo "COMMIT_MESSAGE=$second_to_last_message" >> $GITHUB_ENV
+            echo "COMMIT_MESSAGE_INDEX=$second_to_last_index" >> $GITHUB_ENV
           else
             echo "マージのコミットメッセージしかなかったのでそれをコミットメッセージとする"
-            second_to_last_message=$(jq -r ".commits[0].message" <<< "event_json")
+            echo "COMMIT_MESSAGE_INDEX=0" >> $GITHUB_ENV
           fi
+          echo $COMMIT_MESSAGE_INDEX
 
+      - name: コミットメッセージ取得
+        run: |
+          index=$COMMIT_MESSAGE_INDEX
+          commit_message=$(echo '${{ toJson(github.event.commits) }}' | jq -r ".[$index].message")
+          echo "Commit message: $commit_message"
           # メッセージをサニタイズ
-          sanitized_message=$(echo "$second_to_last_message" | sed 's/[&;<>$()'"'"'|*?#]//g' | tr -d '"')
+          sanitized_message=$(echo "$commit_message" | sed 's/[&;<>$()'"'"'|*?#]//g' | tr -d '"')
 
           # サニタイズされたメッセージを$GITHUB_ENVに設定
           echo "COMMIT_MESSAGE=$sanitized_message" >> $GITHUB_ENV
