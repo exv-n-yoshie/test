@@ -111,9 +111,9 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           GITHUB_PULL_REQUEST_BASE_REF: ${{ github.ref_name }}
-          GITHUB_PULL_REQUEST_TITLE: ${{ github.event.head_commit.message }}
+          GITHUB_PULL_REQUEST_TITLE: ${{ github.event.commits.message }}
         run: |
           cd "${GITHUB_REPOSITORY#*/}"
           git add .
-          git commit -m "${GITHUB_PULL_REQUEST_BASE_REF} ${GITHUB_PULL_REQUEST_TITLE} ディプロイ"
+          git commit -m "${GITHUB_PULL_REQUEST_BASE_REF} ${GITHUB_PULL_REQUEST_TITLE%%$'\n'*} ディプロイ"
           git push origin HEAD
