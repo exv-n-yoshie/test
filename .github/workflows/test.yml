@@ -101,14 +101,38 @@ jobs:
 
           # echo "ビルド"
           # npx gulp $environment
+          cd "${GITHUB_REPOSITORY#*/}"
+          echo 1 >> test.txt
+
+      - name: Set GitHub event as environment variable
+        run: echo 'GITHUB_EVENT_JSON<<EOF' >> $GITHUB_ENV && echo '${{ toJson(github.event) }}' >> $GITHUB_ENV && echo 'EOF' >> $GITHUB_ENV
+
+      - name: コミットメッセージを取得
+        run: |
+          event_json="${env.GITHUB_EVENT_JSON}"
+          commits_length=$(jq '.commits | length' <<< "event_json")
+          second_to_last_index=$((commits_length - 2))
+          if [ $second_to_last_index -ge 0 ]; then
+            second_to_last_message=$(jq -r ".commits[$second_to_last_index].message" <<< "event_json")
+            echo "マージ前のコミットメッセージ: $second_to_last_message"
+            echo "COMMIT_MESSAGE=$second_to_last_message" >> $GITHUB_ENV
+          else
+            echo "マージのコミットメッセージしかなかったのでそれをコミットメッセージとする"
+            second_to_last_message=$(jq -r ".commits[0].message" <<< "event_json")
+          fi
+
+          # メッセージをサニタイズ
+          sanitized_message=$(echo "$second_to_last_message" | sed 's/[&;<>$()'"'"'|*?#]//g' | tr -d '"')
+
+          # サニタイズされたメッセージを$GITHUB_ENVに設定
+          echo "COMMIT_MESSAGE=$sanitized_message" >> $GITHUB_ENV
 
       - name: デプロイ用ブランチにコミット
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           GITHUB_PULL_REQUEST_BASE_REF: ${{ github.ref_name }}
-          GITHUB_PULL_REQUEST_TITLE: ${{ github.event.head_commit.message }}
         run: |
           cd "${GITHUB_REPOSITORY#*/}"
           git add .
-          git commit -m "${GITHUB_PULL_REQUEST_BASE_REF} ${GITHUB_PULL_REQUEST_TITLE} ディプロイ"
+          git commit -m "${GITHUB_PULL_REQUEST_BASE_REF} ${env.COMMIT_MESSAGE%%$'\n'*} ディプロイ"
           git push origin HEAD
