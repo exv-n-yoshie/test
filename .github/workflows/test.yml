@@ -109,16 +109,29 @@ jobs:
 
       - name: コミットメッセージを取得
         run: |
-          commits_length=$(jq length <<< "${{ github.event.commits }}")
-          echo "commits_length: $commits_length"
+          commits_length=$(jq '.commits | length' <<< "${{ toJson(github.event) }}")
+          second_to_last_index=$((commits_length - 2))
+          if [ $second_to_last_index -ge 0 ]; then
+            second_to_last_message=$(jq -r ".commits[$second_to_last_index].message" <<< "${{ toJson(github.event) }}")
+            echo "マージ前のコミットメッセージ: $second_to_last_message"
+            echo "COMMIT_MESSAGE=$second_to_last_message" >> $GITHUB_ENV
+          else
+            echo "マージのコミットメッセージしかなかったのでそれをコミットメッセージとする"
+            second_to_last_message=$(jq -r ".commits[0].message" <<< "${{ toJson(github.event) }}")
+          fi
+
+          # メッセージをサニタイズ
+          sanitized_message=$(echo "$second_to_last_message" | sed 's/[&;<>$()`|*?#]//g' | tr -d "'" | tr -d '"')
+
+          # サニタイズされたメッセージを$GITHUB_ENVに設定
+          echo "COMMIT_MESSAGE=$sanitized_message" >> $GITHUB_ENV
 
       - name: デプロイ用ブランチにコミット
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           GITHUB_PULL_REQUEST_BASE_REF: ${{ github.ref_name }}
-          GITHUB_PULL_REQUEST_TITLE: ${{ github.event.commits[0].message }}
         run: |
           cd "${GITHUB_REPOSITORY#*/}"
           git add .
-          git commit -m "${GITHUB_PULL_REQUEST_BASE_REF} ${GITHUB_PULL_REQUEST_TITLE%%$'\n'*} ディプロイ"
+          git commit -m "${GITHUB_PULL_REQUEST_BASE_REF} ${env.COMMIT_MESSAGE%%$'\n'*} ディプロイ"
           git push origin HEAD
