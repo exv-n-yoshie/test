@@ -120,10 +120,12 @@ jobs:
             }
             let message = secondToLastCommit.message;
             // 一行目だけを取得
-            message = message.ssplit('\n')[0];
+            message = message.split('\n')[0];
+            // サニタイズ
             message = message.replace(/[&;<>$()'"'|*?#]/g, '');
             message = message.replace(/[\x00-\x1F\x7F]/g, '');
             console.log(`サニタイズされたコミットメッセージ: ${message}`);
+
             core.setOutput('commit_message', message);
 
       - name: デプロイ用ブランチにコミット
