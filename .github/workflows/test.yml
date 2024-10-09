@@ -115,11 +115,11 @@ jobs:
               secondToLastCommit = commits[commits.length - 2];
               console.log(`一個前のコミットメッセージを取得: ${secondToLastCommit.message}`);
             } else {
-              console.log('Not enough commits to get the second to last one');
               secondToLastCommit = commits[0];
               console.log(`一個前のコミットメッセージがないため直前のコミットメッセージを取得: ${secondToLastCommit.message}`);
             }
             let message = secondToLastCommit.message;
+            console.log(`取得したコミットメッセージ: ${message}`);
             message = message.replace(/[^a-zA-Z0-9]/g, '');
             message = message.replace(/[\x00-\x1F\x7F]/g, '');
             console.log(`サニタイズされたコミットメッセージ: ${message}`);
