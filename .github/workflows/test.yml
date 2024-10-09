@@ -119,22 +119,12 @@ jobs:
               console.log(`一個前のコミットメッセージがないため直前のコミットメッセージを取得: ${secondToLastCommit.message}`);
             }
             let message = secondToLastCommit.message;
-            console.log(`取得したコミットメッセージ: ${message}`);
-            message = message.replace(/[^a-zA-Z0-9]/g, '');
-            console.log(`1回目のサニタイジング: ${message}`);
+            // 一行目だけを取得
+            message = message.ssplit('\n')[0];
+            message = message.replace(/[&;<>$()'"'|*?#]/g, '');
             message = message.replace(/[\x00-\x1F\x7F]/g, '');
             console.log(`サニタイズされたコミットメッセージ: ${message}`);
-            core.setOutput('second_to_last_message', message);
-
-      - name: コミットメッセージ取得
-        run: |
-          commit_message="${{ steps.get_commit.outputs.second_to_last_message }}"
-
-          # メッセージをサニタイズ
-          sanitized_message=$(echo "$commit_message" | sed 's/[&;<>$()'"'"'|*?#]//g' | tr -d '"')
-
-          # サニタイズされたメッセージを$GITHUB_ENVに設定
-          echo "COMMIT_MESSAGE=$sanitized_message" >> $GITHUB_ENV
+            core.setOutput('commit_message', message);
 
       - name: デプロイ用ブランチにコミット
         env:
@@ -143,5 +133,5 @@ jobs:
         run: |
           cd "${GITHUB_REPOSITORY#*/}"
           git add .
-          git commit -m "${GITHUB_PULL_REQUEST_BASE_REF} ${env.COMMIT_MESSAGE%%$'\n'*} ディプロイ"
+          git commit -m "${GITHUB_PULL_REQUEST_BASE_REF} ${{ steps.get_commit.outputs.commit_message }} ディプロイ"
           git push origin HEAD
