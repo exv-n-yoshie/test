@@ -121,6 +121,7 @@ jobs:
             let message = secondToLastCommit.message;
             console.log(`取得したコミットメッセージ: ${message}`);
             message = message.replace(/[^a-zA-Z0-9]/g, '');
+            console.log(`1回目のサニタイジング: ${message}`);
             message = message.replace(/[\x00-\x1F\x7F]/g, '');
             console.log(`サニタイズされたコミットメッセージ: ${message}`);
             core.setOutput('second_to_last_message', message);
