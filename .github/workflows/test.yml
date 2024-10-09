@@ -104,16 +104,36 @@ jobs:
           cd "${GITHUB_REPOSITORY#*/}"
           echo 1 >> test.txt
 
-      - name: イベント情報を表示
-        run: echo '${{toJSON(github.event)}}'
+      - name: コミットメッセージを取得する
+        id: get_commit
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const commits = context.payload.commits;
+            let secondToLastCommit = '';
+            if (commits.length > 1) {
+              secondToLastCommit = commits[commits.length - 2];
+              console.log(`一個前のコミットメッセージを取得: ${secondToLastCommit.message}`);
+            } else {
+              secondToLastCommit = commits[0];
+              console.log(`一個前のコミットメッセージがないため直前のコミットメッセージを取得: ${secondToLastCommit.message}`);
+            }
+            let message = secondToLastCommit.message;
+            // 一行目だけを取得
+            message = message.split('\n')[0];
+            // サニタイズ
+            message = message.replace(/[&;<>$()'"'|*?#`!]/g, '');
+            message = message.replace(/[\x00-\x1F\x7F]/g, '');
+            console.log(`サニタイズされたコミットメッセージ: ${message}`);
+
+            core.setOutput('commit_message', message);
 
       - name: デプロイ用ブランチにコミット
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           GITHUB_PULL_REQUEST_BASE_REF: ${{ github.ref_name }}
-          GITHUB_PULL_REQUEST_TITLE: ${{ github.event.commits[0].message }}
         run: |
           cd "${GITHUB_REPOSITORY#*/}"
           git add .
-          git commit -m "${GITHUB_PULL_REQUEST_BASE_REF} ${GITHUB_PULL_REQUEST_TITLE%%$'\n'*} ディプロイ"
+          git commit -m "${GITHUB_PULL_REQUEST_BASE_REF} ${{ steps.get_commit.outputs.commit_message }} ディプロイ"
           git push origin HEAD
